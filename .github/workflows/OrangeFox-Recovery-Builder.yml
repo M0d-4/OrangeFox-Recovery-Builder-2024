@@ -15,11 +15,11 @@ on:
       DEVICE_TREE:
         description: 'Custom Recovery Tree'
         required: true
-        default: 'https://github.com/M0d-4/android_device_samsung_a23-twrp'
+        default: 'https://github.com/M0d-4/android_device_samsung_a23'
       DEVICE_TREE_BRANCH:
         description: 'Custom Recovery Tree Branch'
         required: true
-        default: 'ofox-12.1'
+        default: 'ofox-14.1_test'
       DEVICE_PATH:
         description: 'Specify your device path.'
         required: true
