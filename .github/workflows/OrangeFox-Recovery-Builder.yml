@@ -85,7 +85,6 @@ jobs:
       run: |
         sudo apt update
         sudo apt -y upgrade
-        sudo apt -y install libguava-java
         git clone https://gitlab.com/OrangeFox/misc/scripts
         cd scripts
         sudo bash setup/android_build_env.sh
@@ -100,6 +99,23 @@ jobs:
         git clone https://gitlab.com/OrangeFox/sync.git
         cd sync
         ./orangefox_sync.sh --branch ${{ github.event.inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+ 
+    - name: Fix Guava Dependency
+      run: |
+        sudo apt -y install libguava-java
+        GUAVA_JAR=$(find /usr/share/java -name "guava*.jar" | grep -v debian | head -1)
+        PREBUILTS_DIR=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/prebuilts/misc/common/guava
+        mkdir -p ${PREBUILTS_DIR}
+        cp ${GUAVA_JAR} ${PREBUILTS_DIR}/guava.jar
+        # Patch the Android.bp if it exists, otherwise create a minimal one
+        BP_FILE=${PREBUILTS_DIR}/Android.bp
+        cat > ${BP_FILE} << 'EOF'
+java_import {
+    name: "guava",
+    jars: ["guava.jar"],
+    sdk_version: "core_current",
+}
+EOF
  
     - name: Clone Device Tree
       run: |
