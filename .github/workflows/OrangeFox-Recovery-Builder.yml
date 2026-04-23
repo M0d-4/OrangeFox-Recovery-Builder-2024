@@ -121,9 +121,10 @@ jobs:
         set +e
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
+        export THIS_DEVICE=${{ github.event.inputs.DEVICE_NAME }}
+        export FOX_BUILD_DEVICE=${{ github.event.inputs.DEVICE_NAME }}
         set -e
         ${{ steps.fox_branch.outputs.value }}
-
     - name: Set Build Date # Output will be use in Release
       run: |
         echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
