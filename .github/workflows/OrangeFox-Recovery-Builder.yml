@@ -119,10 +119,10 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         set +e
-        source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
         export THIS_DEVICE=${{ github.event.inputs.DEVICE_NAME }}
         export FOX_BUILD_DEVICE=${{ github.event.inputs.DEVICE_NAME }}
+        source build/envsetup.sh
+        export ALLOW_MISSING_DEPENDENCIES=true
         set -e
         ${{ steps.fox_branch.outputs.value }}
     - name: Set Build Date # Output will be use in Release
