@@ -1,5 +1,5 @@
 name: OrangeFox - Build
-
+ 
 on:
   workflow_dispatch:
     inputs:
@@ -51,7 +51,7 @@ on:
         type: boolean
         required: true
         default: true
-
+ 
 jobs:
   build:
     name: Build OFRP by ${{ github.actor }}
@@ -63,8 +63,8 @@ jobs:
       contents: write
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
-
+      uses: actions/checkout@v4
+ 
     - name: Display Inputs
       run: |
         echo "::group::User Environment Variables"
@@ -72,10 +72,10 @@ jobs:
         echo "Include Recovery Installer: ${{ github.event.inputs.RECOVERY_INSTALLER }}"
         echo "Release recovery.tar For Samsung devices: ${{ github.event.inputs.RECOVERY_TAR }}"
         echo "::endgroup::"
-
+ 
     - name: Clean-up
       uses: rokibhasansagar/slimhub_actions@main
-
+ 
     - name: Swap Space
       uses: pierotofy/set-swap-space@master
       with:
@@ -85,6 +85,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt -y upgrade
+        sudo apt -y install libguava-java
         git clone https://gitlab.com/OrangeFox/misc/scripts
         cd scripts
         sudo bash setup/android_build_env.sh
@@ -99,16 +100,16 @@ jobs:
         git clone https://gitlab.com/OrangeFox/sync.git
         cd sync
         ./orangefox_sync.sh --branch ${{ github.event.inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
-
+ 
     - name: Clone Device Tree
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         git clone ${{ github.event.inputs.DEVICE_TREE }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
         cd ${{ github.event.inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
+ 
     - name: Check Manifest Branch
-      uses: haya14busa/action-cond@v1
+      uses: haya14busa/action-cond@v1.2.1
       id: fox_branch
       with:
         cond: ${{ github.event.inputs.MANIFEST_BRANCH == '11.0' || github.event.inputs.MANIFEST_BRANCH == '12.1' }}
@@ -134,7 +135,7 @@ jobs:
           DEVICE_TREE_URL="${DEVICE_TREE_URL%.git}"
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
-
+ 
     - name: Check if Recovery Exist
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
@@ -150,7 +151,7 @@ jobs:
             echo "Recovery out directory is empty."
             cd Exit
         fi
-
+ 
     - name: Rename the Recovery
       run: |
         cd ${{ env.FILE_PATH }}/
@@ -187,7 +188,7 @@ jobs:
           tar -cvf ${{ env.RECOVERY_TYPE }}.tar ${{ env.RECOVERY_TYPE }}.img
         fi
       continue-on-error: true
-
+ 
     - name: Upload to Release
       if: env.CHECK_IMG_IS_OK == 'true'
       uses: softprops/action-gh-release@v1
@@ -229,3 +230,4 @@ jobs:
         python3 ldcheck -p system/lib64:vendor/lib64:system/lib:vendor/lib -d ${{ github.event.inputs.LDCHECK }}
         echo "Done checking missing dependencies. Review, and reconfigure your tree."
       continue-on-error: true
+ 
