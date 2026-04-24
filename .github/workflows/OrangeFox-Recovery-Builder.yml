@@ -100,15 +100,25 @@ jobs:
         cd sync
         ./orangefox_sync.sh --branch ${{ github.event.inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
 
-    - name: Fix Guava Dependency
+    - name: Fix Missing Prebuilts
+      if: github.event.inputs.MANIFEST_BRANCH == '14.1'
       run: |
         FOX_DIR=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+
+        # guava
         GUAVA_DIR=${FOX_DIR}/prebuilts/misc/common/guava
         mkdir -p ${GUAVA_DIR}
         curl -L "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" -o ${GUAVA_DIR}/guava.jar
         printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    host_supported: true,\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n    apex_available: [\n        "//apex_available:platform",\n        "//apex_available:anyapex",\n    ],\n}\n' > ${GUAVA_DIR}/Android.bp
-        echo "Guava prebuilt created at ${GUAVA_DIR}"
-        ls -lh ${GUAVA_DIR}
+
+        # jsr305 (provides javax.annotation.Nullable)
+        JSR_DIR=${FOX_DIR}/prebuilts/misc/common/jsr305
+        mkdir -p ${JSR_DIR}
+        curl -L "https://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" -o ${JSR_DIR}/jsr305.jar
+        printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "jsr305",\n    jars: ["jsr305.jar"],\n    host_supported: true,\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n}\n' > ${JSR_DIR}/Android.bp
+
+        echo "Prebuilts created successfully"
+        ls -lh ${GUAVA_DIR} ${JSR_DIR}
 
     - name: Clone Device Tree
       run: |
