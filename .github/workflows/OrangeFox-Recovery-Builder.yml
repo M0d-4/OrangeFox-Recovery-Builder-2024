@@ -59,6 +59,7 @@ jobs:
     if: github.event.repository.owner.id == github.event.sender.id
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
     steps:
@@ -103,16 +104,16 @@ jobs:
     - name: Fix Guava Dependency
       run: |
         FOX_DIR=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
-        GUAVA_BP=$(grep -rl 'name: "guava"' ${FOX_DIR}/prebuilts --include="Android.bp" 2>/dev/null | head -1)
-        echo "Found guava Android.bp at: $GUAVA_BP"
-        if grep -q 'apex_available' "$GUAVA_BP"; then
-          sed -i '/apex_available/,/\]/{/\]/i\            "//apex_available:anyapex",
-          }' "$GUAVA_BP"
-        else
-          sed -i '/name: "guava"/a\    apex_available: ["//apex_available:anyapex", "//apex_available:platform"],' "$GUAVA_BP"
+        ODP_BP=${FOX_DIR}/packages/modules/OnDevicePersonalization/apex/Android.bp
+        if [ -f "$ODP_BP" ]; then
+          echo "Removing OnDevicePersonalization apex from build..."
+          echo '// Excluded: requires guava apex_available not present in minimal manifest' > "$ODP_BP"
         fi
-        echo "Patched Android.bp:"
-        cat "$GUAVA_BP" 
+        ODP_MK=$(find ${FOX_DIR}/packages/modules/OnDevicePersonalization -name "Android.mk" 2>/dev/null | head -1)
+        if [ -f "$ODP_MK" ]; then
+          echo '# Excluded' > "$ODP_MK"
+        fi
+        echo "Done patching OnDevicePersonalization." 
  
     - name: Clone Device Tree
       run: |
