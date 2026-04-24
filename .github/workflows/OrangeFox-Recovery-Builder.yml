@@ -111,14 +111,34 @@ jobs:
         curl -L "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" -o ${GUAVA_DIR}/guava.jar
         printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    host_supported: true,\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n    apex_available: [\n        "//apex_available:platform",\n        "//apex_available:anyapex",\n    ],\n}\n' > ${GUAVA_DIR}/Android.bp
 
-        # jsr305 (provides javax.annotation.Nullable)
-        JSR_DIR=${FOX_DIR}/prebuilts/misc/common/jsr305
-        mkdir -p ${JSR_DIR}
-        curl -L "https://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" -o ${JSR_DIR}/jsr305.jar
-        printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "jsr305",\n    jars: ["jsr305.jar"],\n    host_supported: true,\n    visibility: ["//visibility:public"],\n    apex_available: [\n        "//apex_available:platform",\n        "//apex_available:anyapex",\n    ],\n}\n' > ${JSR_DIR}/Android.bp
+        # Find and patch SingleAnnotationProcessor.java
+        echo "Searching for SingleAnnotationProcessor.java..."
+        COMPAT_SRC=$(find ${FOX_DIR}/tools/platform-compat -name "SingleAnnotationProcessor.java" 2>/dev/null | head -1)
+        echo "Found at: $COMPAT_SRC"
+        if [ -n "$COMPAT_SRC" ]; then
+          sed -i 's|import javax.annotation.Nullable;||g' "$COMPAT_SRC"
+          sed -i 's|@Nullable||g' "$COMPAT_SRC"
+          echo "Patched SingleAnnotationProcessor.java - verifying:"
+          grep -n "Nullable\|jsr305" "$COMPAT_SRC" || echo "No Nullable references remain - patch successful"
+        else
+          echo "WARNING: SingleAnnotationProcessor.java not found!"
+          find ${FOX_DIR}/tools/platform-compat -name "*.java" 2>/dev/null | head -10
+        fi
 
-        echo "Prebuilts created successfully"
-        ls -lh ${GUAVA_DIR} ${JSR_DIR}
+        # Find and patch the Android.bp
+        echo "Searching for unsupportedappusage Android.bp..."
+        COMPAT_BP=$(find ${FOX_DIR}/tools/platform-compat -name "Android.bp" | xargs grep -l "jsr305" 2>/dev/null | head -1)
+        echo "Found at: $COMPAT_BP"
+        if [ -n "$COMPAT_BP" ]; then
+          sed -i '/"jsr305"/d' "$COMPAT_BP"
+          echo "Patched Android.bp - verifying:"
+          grep -n "jsr305" "$COMPAT_BP" || echo "No jsr305 references remain - patch successful"
+        else
+          echo "WARNING: No Android.bp with jsr305 found!"
+        fi
+
+        echo "Prebuilts and patches done"
+        ls -lh ${GUAVA_DIR}
 
     - name: Clone Device Tree
       run: |
@@ -126,13 +146,6 @@ jobs:
         git clone ${{ github.event.inputs.DEVICE_TREE }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
         cd ${{ github.event.inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-    - name: Debug platform-compat source
-      if: github.event.inputs.MANIFEST_BRANCH == '14.1'
-      run: |
-        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat -name "SingleAnnotationProcessor.java" 2>/dev/null
-        grep -n "Nullable\|jsr305" ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/SingleAnnotationProcessor.java 2>/dev/null || echo "File not found"
-        grep -n "jsr305" ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/unsupportedappusage/Android.bp 2>/dev/null || echo "No jsr305 in Android.bp"
 
     - name: Check Manifest Branch
       uses: haya14busa/action-cond@v1.2.1
