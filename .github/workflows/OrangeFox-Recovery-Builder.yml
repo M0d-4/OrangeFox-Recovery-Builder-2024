@@ -1,5 +1,5 @@
 name: OrangeFox - Build
- 
+
 on:
   workflow_dispatch:
     inputs:
@@ -51,7 +51,7 @@ on:
         type: boolean
         required: true
         default: true
- 
+
 jobs:
   build:
     name: Build OFRP by ${{ github.actor }}
@@ -59,13 +59,12 @@ jobs:
     if: github.event.repository.owner.id == github.event.sender.id
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
- 
+
     - name: Display Inputs
       run: |
         echo "::group::User Environment Variables"
@@ -73,10 +72,10 @@ jobs:
         echo "Include Recovery Installer: ${{ github.event.inputs.RECOVERY_INSTALLER }}"
         echo "Release recovery.tar For Samsung devices: ${{ github.event.inputs.RECOVERY_TAR }}"
         echo "::endgroup::"
- 
+
     - name: Clean-up
       uses: rokibhasansagar/slimhub_actions@main
- 
+
     - name: Swap Space
       uses: pierotofy/set-swap-space@master
       with:
@@ -100,34 +99,24 @@ jobs:
         git clone https://gitlab.com/OrangeFox/sync.git
         cd sync
         ./orangefox_sync.sh --branch ${{ github.event.inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
- 
+
     - name: Fix Guava Dependency
       run: |
         FOX_DIR=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         GUAVA_DIR=${FOX_DIR}/prebuilts/misc/common/guava
         mkdir -p ${GUAVA_DIR}
         curl -L "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" -o ${GUAVA_DIR}/guava.jar
-        printf 'package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
- 
-java_import {
-    name: "guava",
-    jars: ["guava.jar"],
-    sdk_version: "core_current",
-    visibility: ["//visibility:public"],
-}
-' > ${GUAVA_DIR}/Android.bp
+        printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n}\n' > ${GUAVA_DIR}/Android.bp
         echo "Guava prebuilt created at ${GUAVA_DIR}"
         ls -lh ${GUAVA_DIR}
- 
+
     - name: Clone Device Tree
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         git clone ${{ github.event.inputs.DEVICE_TREE }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
         cd ${{ github.event.inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
- 
+
     - name: Check Manifest Branch
       uses: haya14busa/action-cond@v1.2.1
       id: fox_branch
@@ -155,7 +144,7 @@ java_import {
           DEVICE_TREE_URL="${DEVICE_TREE_URL%.git}"
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
- 
+
     - name: Check if Recovery Exist
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
@@ -171,7 +160,7 @@ java_import {
             echo "Recovery out directory is empty."
             cd Exit
         fi
- 
+
     - name: Rename the Recovery
       run: |
         cd ${{ env.FILE_PATH }}/
@@ -208,7 +197,7 @@ java_import {
           tar -cvf ${{ env.RECOVERY_TYPE }}.tar ${{ env.RECOVERY_TYPE }}.img
         fi
       continue-on-error: true
- 
+
     - name: Upload to Release
       if: env.CHECK_IMG_IS_OK == 'true'
       uses: softprops/action-gh-release@v1
@@ -250,4 +239,3 @@ java_import {
         python3 ldcheck -p system/lib64:vendor/lib64:system/lib:vendor/lib -d ${{ github.event.inputs.LDCHECK }}
         echo "Done checking missing dependencies. Review, and reconfigure your tree."
       continue-on-error: true
- 
