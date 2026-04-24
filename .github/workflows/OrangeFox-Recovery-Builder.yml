@@ -130,7 +130,9 @@ jobs:
     - name: Debug platform-compat source
       if: github.event.inputs.MANIFEST_BRANCH == '14.1'
       run: |
-        cat ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/SingleAnnotationProcessor.java
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat -name "SingleAnnotationProcessor.java" 2>/dev/null
+        grep -n "Nullable\|jsr305" ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/SingleAnnotationProcessor.java 2>/dev/null || echo "File not found"
+        grep -n "jsr305" ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/unsupportedappusage/Android.bp 2>/dev/null || echo "No jsr305 in Android.bp"
 
     - name: Check Manifest Branch
       uses: haya14busa/action-cond@v1.2.1
