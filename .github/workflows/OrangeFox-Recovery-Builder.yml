@@ -106,7 +106,7 @@ jobs:
         GUAVA_DIR=${FOX_DIR}/prebuilts/misc/common/guava
         mkdir -p ${GUAVA_DIR}
         curl -L "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" -o ${GUAVA_DIR}/guava.jar
-        printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n}\n' > ${GUAVA_DIR}/Android.bp
+        printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n    apex_available: [\n        "//apex_available:platform",\n        "//apex_available:anyapex",\n    ],\n}\n' > ${GUAVA_DIR}/Android.bp
         echo "Guava prebuilt created at ${GUAVA_DIR}"
         ls -lh ${GUAVA_DIR}
 
