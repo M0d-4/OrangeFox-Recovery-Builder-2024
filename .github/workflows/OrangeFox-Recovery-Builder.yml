@@ -127,6 +127,11 @@ jobs:
         cd ${{ github.event.inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
+    - name: Debug platform-compat source
+      if: github.event.inputs.MANIFEST_BRANCH == '14.1'
+      run: |
+        cat ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/tools/platform-compat/java/android/processor/compat/SingleAnnotationProcessor.java
+
     - name: Check Manifest Branch
       uses: haya14busa/action-cond@v1.2.1
       id: fox_branch
