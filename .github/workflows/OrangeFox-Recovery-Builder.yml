@@ -111,19 +111,14 @@ jobs:
         curl -L "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" -o ${GUAVA_DIR}/guava.jar
         printf 'package {\n    default_applicable_licenses: ["Android-Apache-2.0"],\n}\n\njava_import {\n    name: "guava",\n    jars: ["guava.jar"],\n    host_supported: true,\n    sdk_version: "core_current",\n    visibility: ["//visibility:public"],\n    apex_available: [\n        "//apex_available:platform",\n        "//apex_available:anyapex",\n    ],\n}\n' > ${GUAVA_DIR}/Android.bp
 
-        # Find and patch SingleAnnotationProcessor.java
-        echo "Searching for SingleAnnotationProcessor.java..."
-        COMPAT_SRC=$(find ${FOX_DIR}/tools/platform-compat -name "SingleAnnotationProcessor.java" 2>/dev/null | head -1)
-        echo "Found at: $COMPAT_SRC"
-        if [ -n "$COMPAT_SRC" ]; then
-          sed -i 's|import javax.annotation.Nullable;||g' "$COMPAT_SRC"
-          sed -i 's|@Nullable||g' "$COMPAT_SRC"
-          echo "Patched SingleAnnotationProcessor.java - verifying:"
-          grep -n "Nullable\|jsr305" "$COMPAT_SRC" || echo "No Nullable references remain - patch successful"
-        else
-          echo "WARNING: SingleAnnotationProcessor.java not found!"
-          find ${FOX_DIR}/tools/platform-compat -name "*.java" 2>/dev/null | head -10
-        fi
+        # Patch all Java files in platform-compat that import javax.annotation.Nullable
+        echo "Patching all platform-compat Java files with Nullable imports..."
+        grep -rl "import javax.annotation.Nullable" ${FOX_DIR}/tools/platform-compat --include="*.java" 2>/dev/null | while read f; do
+          sed -i 's|import javax.annotation.Nullable;||g' "$f"
+          sed -i 's|@Nullable||g' "$f"
+          echo "Patched: $f"
+        done
+        echo "Done patching platform-compat Java files" 
 
         # Find and patch the Android.bp
         echo "Searching for unsupportedappusage Android.bp..."
