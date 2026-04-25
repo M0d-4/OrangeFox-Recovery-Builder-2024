@@ -6,7 +6,7 @@ on:
       MANIFEST_BRANCH:
         description: 'OrangeFox Branch'
         required: true
-        default: '14.1'
+        default: '12.1'
         type: choice
         options:
         - 14.1
@@ -19,7 +19,7 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'Custom Recovery Tree Branch'
         required: true
-        default: 'ofox-14.1_test'
+        default: 'ofox-12.1'
       DEVICE_PATH:
         description: 'Specify your device path.'
         required: true
