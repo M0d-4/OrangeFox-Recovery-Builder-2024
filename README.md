@@ -1,4 +1,4 @@
-# compile OrangeFox Recovery with Github Actions
+# Compile OrangeFox Recovery with Github Actions
 ```
 Added 14.1 support
 Supports OrangeFox 14.1 / 12.1 / 11
