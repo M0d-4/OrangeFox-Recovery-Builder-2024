@@ -1,7 +1,7 @@
 # compile OrangeFox Recovery with Github Actions
 ```
 Added 14.1 support
-Supports OrangeFox 14.1/ 12.1 / 11
+Supports OrangeFox 14.1 / 12.1 / 11
 **************
 Syncing will take a *VERY* long time
 **************
